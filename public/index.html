@@ -1,0 +1,27 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>ProxiSpeak voice test</title></head>
+<body>
+<h3>ProxiSpeak voice test (demo page)</h3>
+<p>Token format: <code>userId|officeId|x|y</code> e.g. <code>alice|officeA|0|0</code></p>
+<input id="token" size="30" value="alice|officeA|0|0"> <button id="connect">Connect</button><br><br>
+<input id="target" placeholder="user to call, e.g. bob"> <button id="call">Call</button> <button id="hangup">Hang up</button>
+<pre id="log"></pre><audio id="remote" autoplay></audio>
+<script src="/socket.io/socket.io.js"></script>
+<script src="/voice-client.js"></script>
+<script>
+  const log = (m) => { document.getElementById('log').textContent += m + '\n'; };
+  let voice;
+  document.getElementById('connect').onclick = () => {
+    const socket = io({ auth: { token: document.getElementById('token').value } });
+    socket.on('connect', () => log('connected'));
+    socket.on('connect_error', (e) => log('connect error: ' + e.message));
+    voice = createVoiceClient({
+      socket,
+      onRemoteStream: (s) => { document.getElementById('remote').srcObject = s; },
+      onState: (s) => log('state: ' + s),
+      onError: (e) => log('error: ' + (e.code || e.message)),
+    });
+  };
+  document.getElementById('call').onclick = () => voice.call(document.getElementById('target').value);
+  document.getElementById('hangup').onclick = () => voice.hangup();
+</script></body></html>
